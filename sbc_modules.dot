@@ -1,0 +1,151 @@
+digraph G { 
+bgcolor="lightgray";
+node [shape=diamond style=filled color=pink]
+node [shape=plaintext style=filled color=Beige]
+"zone_userpool"  [label="domain
+global_certificate_arn
+zone_id
+"];
+"management-events_userpool"  [label="management_events_database_name
+management_events_table_name
+"];
+"protobuf-backup_backup"  [label="protobuf_backup_bucket_arn
+"];
+"telemetry-export_backup"  [label="telemetry_export_bucket_arn
+"];
+"grafana_backup"  [label="grafana_efs_arn
+"];
+"zone_email"  [label="domain
+zone_id
+"];
+"misc_ingestion"  [label="misc_cloudwatch-alarms-sns-topic
+"];
+"misc_protobuf-backup"  [label="misc_cloudwatch-alarms-sns-topic
+misc_exported_reports_bucket_id
+"];
+"misc_telemetry-export"  [label="misc_cloudwatch-alarms-sns-topic
+misc_exported_reports_bucket_id
+"];
+"ingestion_iot"  [label="kinesis_stream_arn
+kinesis_stream_name
+kinesis_stream_ced_name
+kinesis_stream_ced_arn
+"];
+"protobuf-backup_iot"  [label="protobuf_backup_firehose_stream_telemetry_arn
+protobuf_backup_firehose_stream_telemetry_name
+protobuf_backup_ced_firehose_stream_telemetry_arn
+protobuf_backup_ced_firehose_stream_telemetry_name
+"];
+"zone_iot"  [label="zone_id
+certificate_arn
+"];
+"misc_iot"  [label="misc_cloudwatch-alarms-sns-topic
+"];
+"vpc_preprocessing"  [label="sbc_vpc_id
+sbc_public_subnets_ids
+sbc_public_subnet_cidr_blocks
+"];
+"ingestion_preprocessing"  [label="kinesis_stream_arn
+kinesis_stream_ced_arn
+"];
+"alerting_preprocessing"  [label="alerting_sqs_queue_arn
+alerting_sqs_queue_url
+"];
+"telemetry-export_preprocessing"  [label="telemetry-export_firehose-stream-metrics-arn
+telemetry-export_firehose-stream-metrics-name
+telemetry-export_firehose-stream-logs-arn
+telemetry-export_firehose-stream-logs-name
+telemetry-export_firehose-stream-ced-metrics-arn
+telemetry-export_firehose-stream-ced-metrics-name
+telemetry-export_firehose-stream-ced-logs-arn
+telemetry-export_firehose-stream-ced-logs-name
+"];
+"misc_preprocessing"  [label="misc_cloudwatch-alarms-sns-topic
+"];
+"vpc_grafana"  [label="sbc_vpc_id
+sbc_public_subnets_ids
+sbc_public_subnet_cidr_blocks
+"];
+"zone_grafana"  [label="zone_id
+certificate_arn
+"];
+"userpool_grafana"  [label="userpool_id
+azuread_provider
+admin_group
+editor_group
+"];
+"email_grafana"  [label="ses_endpoint
+"];
+"zone_device-api"  [label="zone_id
+global_certificate_arn
+"];
+"userpool_portal"  [label="userpool_id
+azuread_provider
+"];
+"device-api_portal"  [label="device_api_dynamodb_arn
+device_api_stage_execution_arn
+device_api_portal_iam_api_paths
+"];
+"device-api_analytics"  [label="device_api_dynamodb_arn
+"];
+"zone" -> "zone_userpool" [arrowhead=none];
+"management-events" -> "management-events_userpool" [arrowhead=none];
+"protobuf-backup" -> "protobuf-backup_backup" [arrowhead=none];
+"telemetry-export" -> "telemetry-export_backup" [arrowhead=none];
+"grafana" -> "grafana_backup" [arrowhead=none];
+"zone" -> "zone_email" [arrowhead=none];
+"misc" -> "misc_ingestion" [arrowhead=none];
+"misc" -> "misc_protobuf-backup" [arrowhead=none];
+"misc" -> "misc_telemetry-export" [arrowhead=none];
+"ingestion" -> "ingestion_iot" [arrowhead=none];
+"protobuf-backup" -> "protobuf-backup_iot" [arrowhead=none];
+"zone" -> "zone_iot" [arrowhead=none];
+"misc" -> "misc_iot" [arrowhead=none];
+"vpc" -> "vpc_preprocessing" [arrowhead=none];
+"ingestion" -> "ingestion_preprocessing" [arrowhead=none];
+"alerting" -> "alerting_preprocessing" [arrowhead=none];
+"telemetry-export" -> "telemetry-export_preprocessing" [arrowhead=none];
+"misc" -> "misc_preprocessing" [arrowhead=none];
+"vpc" -> "vpc_grafana" [arrowhead=none];
+"zone" -> "zone_grafana" [arrowhead=none];
+"userpool" -> "userpool_grafana" [arrowhead=none];
+"email" -> "email_grafana" [arrowhead=none];
+"zone" -> "zone_device-api" [arrowhead=none];
+"userpool" -> "userpool_portal" [arrowhead=none];
+"device-api" -> "device-api_portal" [arrowhead=none];
+"device-api" -> "device-api_analytics" [arrowhead=none];
+"zone_userpool" -> "userpool";
+"management-events_userpool" -> "userpool";
+"protobuf-backup_backup" -> "backup";
+"telemetry-export_backup" -> "backup";
+"grafana_backup" -> "backup";
+"zone_email" -> "email";
+"misc_ingestion" -> "ingestion";
+"misc_protobuf-backup" -> "protobuf-backup";
+"misc_telemetry-export" -> "telemetry-export";
+"ingestion_iot" -> "iot";
+"protobuf-backup_iot" -> "iot";
+"zone_iot" -> "iot";
+"misc_iot" -> "iot";
+"vpc_preprocessing" -> "preprocessing";
+"ingestion_preprocessing" -> "preprocessing";
+"alerting_preprocessing" -> "preprocessing";
+"telemetry-export_preprocessing" -> "preprocessing";
+"misc_preprocessing" -> "preprocessing";
+"vpc_grafana" -> "grafana";
+"zone_grafana" -> "grafana";
+"userpool_grafana" -> "grafana";
+"email_grafana" -> "grafana";
+"zone_device-api" -> "device-api";
+"userpool_portal" -> "portal";
+"device-api_portal" -> "portal";
+"device-api_analytics" -> "analytics";
+
+subgraph cluster1 {
+    label = "Legend" ;
+    shape = rectangle ;
+    stack [style=filled, fillcolor="pink", shape=diamond] ;
+    outputs [style=filled, fillcolor="Beige", shape=rectangle] ;
+    stack -> outputs [style=invis];
+	}
+}
