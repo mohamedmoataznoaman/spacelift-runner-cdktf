@@ -190,6 +190,7 @@ RUN echo "Software installed:"; \
     infracost --version; \
     echo "Prettier v$(prettier --version)"; \
     echo "Regula $(regula version)"; \
-    echo "Bun v$(bun --version)"
+    echo "Bun v$(bun --version)"; \
+    echo terraform --version
 
 USER spacelift

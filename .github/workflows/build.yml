@@ -14,7 +14,7 @@ on:
 
 env:
   REGISTRY: "ghcr.io"
-  IMAGE_NAME: "moohamed-stabl/spacelift-runner-cdktf"
+  IMAGE_NAME: "mohamedmoataznoaman/spacelift-runner-cdktf"
   PLATFORMS: "linux/arm64,linux/amd64"
 
 permissions:
