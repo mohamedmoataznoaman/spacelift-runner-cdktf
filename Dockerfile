@@ -1,7 +1,10 @@
+# This docker file represents a multistage docker build for the spacelift 
+# runner images running our cdktf code and planing it 
 ARG BASE_IMAGE=alpine:3.21
 
 # hadolint ignore=DL3006
-FROM ${BASE_IMAGE} AS common
+# alias the base image as common 
+FROM ${BASE_IMAGE} AS common 
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
@@ -11,11 +14,14 @@ RUN apk --no-cache add \
     curl
 
 FROM common AS base
+# This basially ceates the base image it has the tools that needed 
+# so that the runner can do the needed terraform command 
 
 ARG TARGETARCH
-
+# use the ash shell of the alpin image and a special pipe to handle how to report commands that failed (we should know more what this does)
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
+# some spacelift specific command not of interest, i think that is related to the different runners and the DNS names and how to resolve that 
 RUN echo "hosts: files dns" > /etc/nsswitch.conf \
     && adduser --disabled-password --uid=1983 spacelift
 
@@ -37,6 +43,7 @@ RUN apk -U upgrade && apk add --no-cache \
     yarn \
     python3
 
+# This command checks if the python env var is configured and if not it configures it via the ln(link) command
 RUN [ -e /usr/bin/python ] || ln -s python3 /usr/bin/python
 
 # Install latest NPM version, cdktf and prettier
@@ -58,6 +65,8 @@ RUN REGULA_LATEST_VERSION=$(curl -s https://api.github.com/repos/fugue/regula/re
     mv "/bin/regula" /usr/local/bin/regula && \
     chmod 755 /usr/local/bin/regula && \
     rm /tmp/regula.tar.gz
+
+# This stage basically downloads and extracts Bun for the runner to use with out terraform command 
 
 # From https://github.com/oven-sh/bun/blob/main/dockerhub/alpine/Dockerfile
 FROM common AS bun
@@ -143,8 +152,17 @@ RUN apk --no-cache add \
     esac
 
 
+# This stage festch the aws cli related tools and packages to be used when communicating with AWS to create resources
+
 # hadolint ignore=DL3007
 FROM ghcr.io/spacelift-io/aws-cli-alpine:latest AS aws-cli
+
+# back to the base image where 
+# - copy the aws CLI related binaies
+# - copy the bun related binaries
+
+# we should add a terraform binary stage here where we get the latest terraform versions 
+FROM hashicorp/terraform:latest AS terraform-latest
 
 FROM base
 
@@ -152,9 +170,13 @@ FROM base
 COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=aws-cli /aws-cli-bin/ /usr/local/bin/
 
+# Copy the latest terraform version into the base layer
+COPY --from=terraform-latest /bin/terraform /usr/local/bin/
+
 # Copy Bun binary
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/
 
+# This kinda links the bunx command o bun 
 RUN --mount=type=bind,from=bun,source=/tmp,target=/tmp \
       apk --no-cache --force-overwrite --allow-untrusted add \
       /tmp/glibc.apk \
