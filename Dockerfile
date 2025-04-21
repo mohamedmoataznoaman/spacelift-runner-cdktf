@@ -162,7 +162,7 @@ FROM ghcr.io/spacelift-io/aws-cli-alpine:latest AS aws-cli
 # - copy the bun related binaries
 
 # we should add a terraform binary stage here where we get the latest terraform versions 
-FROM hashicorp/terraform:latest AS terraform-latest
+FROM hashicorp/terraform:1.11 AS terraform-latest
 
 FROM base
 
