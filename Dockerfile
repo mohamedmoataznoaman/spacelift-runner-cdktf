@@ -1,7 +1,7 @@
 # This docker file represents a multistage docker build for the spacelift 
 # runner images running our cdktf code and planing it 
 ARG BASE_IMAGE=alpine:3.21
-
+ARG NODE_VERSION=18.19.1
 # hadolint ignore=DL3006
 # alias the base image as common 
 FROM ${BASE_IMAGE} AS common 
@@ -38,7 +38,6 @@ RUN apk -U upgrade && apk add --no-cache \
     openssh-keygen \
     tzdata \
     bash \
-    nodejs \
     npm \
     yarn \
     python3
@@ -154,6 +153,9 @@ RUN apk --no-cache add \
 
 # This stage festch the aws cli related tools and packages to be used when communicating with AWS to create resources
 
+FROM node:${NODE_VERSION}-alpine AS node
+
+
 # hadolint ignore=DL3007
 FROM ghcr.io/spacelift-io/aws-cli-alpine:latest AS aws-cli
 
@@ -169,6 +171,11 @@ FROM base
 # Copy AWS CLI binaries (from ghcr.io/spacelift-io/aws-cli-alpine)
 COPY --from=aws-cli /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=aws-cli /aws-cli-bin/ /usr/local/bin/
+
+# Copy node JS ver 
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/bin/npm /usr/local/bin/npm
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 # Copy the latest terraform version into the base layer
 COPY --from=terraform-latest /bin/terraform /usr/local/bin/
@@ -191,6 +198,7 @@ RUN echo "Software installed:"; \
     echo "Prettier v$(prettier --version)"; \
     echo "Regula $(regula version)"; \
     echo "Bun v$(bun --version)"; \
-    terraform --version
+    terraform --version; \
+    node -v;
 
 USER spacelift
