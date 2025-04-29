@@ -67,89 +67,7 @@ RUN REGULA_LATEST_VERSION=$(curl -s https://api.github.com/repos/fugue/regula/re
 
 # This stage basically downloads and extracts Bun for the runner to use with out terraform command 
 
-# From https://github.com/oven-sh/bun/blob/main/dockerhub/alpine/Dockerfile
-FROM common AS bun
-
-ARG BUN_VERSION=latest
-ARG GLIBC_VERSION=2.34-r0
-ARG GLIBC_VERSION_AARCH64=2.26-r1
-
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-
-# hadolint ignore=DL3018,DL3003,SC2043
-RUN apk --no-cache add \
-      dirmngr \
-      gpg \
-      gpg-agent \
-      unzip \
-    && arch="$(apk --print-arch)" \
-    && case "${arch##*-}" in \
-      x86_64) build="x64-baseline";; \
-      aarch64) build="aarch64";; \
-      *) echo "error: unsupported architecture: $arch"; exit 1 ;; \
-    esac \
-    && version="$BUN_VERSION" \
-    && case "$version" in \
-      latest | canary | bun-v*) tag="$version"; ;; \
-      v*)                       tag="bun-$version"; ;; \
-      *)                        tag="bun-v$version"; ;; \
-    esac \
-    && case "$tag" in \
-      latest) release="latest/download"; ;; \
-      *)      release="download/$tag"; ;; \
-    esac \
-    && curl "https://github.com/oven-sh/bun/releases/$release/bun-linux-$build.zip" \
-      -fsSLO \
-      --compressed \
-      --retry 5 \
-      || (echo "error: failed to download: $tag" && exit 1) \
-    && for key in \
-      "F3DCC08A8572C0749B3E18888EAB4D40A7B22B59" \
-    ; do \
-      gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$key" \
-      || gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" ; \
-    done \
-    && curl "https://github.com/oven-sh/bun/releases/$release/SHASUMS256.txt.asc" \
-      -fsSLO \
-      --compressed \
-      --retry 5 \
-    && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
-      || (echo "error: failed to verify: $tag" && exit 1) \
-    && grep " bun-linux-$build.zip\$" SHASUMS256.txt | sha256sum -c - \
-      || (echo "error: failed to verify: $tag" && exit 1) \
-    && unzip "bun-linux-$build.zip" \
-    && mv "bun-linux-$build/bun" /usr/local/bin/bun \
-    && rm -f "bun-linux-$build.zip" SHASUMS256.txt.asc SHASUMS256.txt \
-    && chmod +x /usr/local/bin/bun \
-    && cd /tmp \
-    && case "${arch##*-}" in \
-      x86_64) curl "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" \
-        -fsSLO \
-        --compressed \
-        --retry 5 \
-        || (echo "error: failed to download: glibc v${GLIBC_VERSION}" && exit 1) \
-      && mv "glibc-${GLIBC_VERSION}.apk" glibc.apk \
-      && curl "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk" \
-        -fsSLO \
-        --compressed \
-        --retry 5 \
-        || (echo "error: failed to download: glibc-bin v${GLIBC_VERSION}" && exit 1) \
-      && mv "glibc-bin-${GLIBC_VERSION}.apk" glibc-bin.apk ;; \
-      aarch64) curl "https://raw.githubusercontent.com/squishyu/alpine-pkg-glibc-aarch64-bin/master/glibc-${GLIBC_VERSION_AARCH64}.apk" \
-        -fsSLO \
-        --compressed \
-        --retry 5 \
-        || (echo "error: failed to download: glibc v${GLIBC_VERSION_AARCH64}" && exit 1) \
-      && mv "glibc-${GLIBC_VERSION_AARCH64}.apk" glibc.apk \
-      && curl "https://raw.githubusercontent.com/squishyu/alpine-pkg-glibc-aarch64-bin/master/glibc-bin-${GLIBC_VERSION_AARCH64}.apk" \
-        -fsSLO \
-        --compressed \
-        --retry 5 \
-        || (echo "error: failed to download: glibc-bin v${GLIBC_VERSION_AARCH64}" && exit 1) \
-      && mv "glibc-bin-${GLIBC_VERSION_AARCH64}.apk" glibc-bin.apk ;; \
-      *) echo "error: unsupported architecture '$arch'"; exit 1 ;; \
-    esac
-
+FROM oven/bun:alpine AS bun
 
 # This stage festch the aws cli related tools and packages to be used when communicating with AWS to create resources
 
@@ -164,6 +82,7 @@ FROM ghcr.io/spacelift-io/aws-cli-alpine:latest AS aws-cli
 # - copy the bun related binaries
 
 # we should add a terraform binary stage here where we get the latest terraform versions 
+# hadolint ignore=DL3007
 FROM hashicorp/terraform:1.11 AS terraform-latest
 
 FROM base
@@ -184,11 +103,7 @@ COPY --from=terraform-latest /bin/terraform /usr/local/bin/
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/
 
 # This kinda links the bunx command o bun 
-RUN --mount=type=bind,from=bun,source=/tmp,target=/tmp \
-      apk --no-cache --force-overwrite --allow-untrusted add \
-      /tmp/glibc.apk \
-      /tmp/glibc-bin.apk \
-    && ln -s /usr/local/bin/bun /usr/local/bin/bunx
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
 # Check versions
 RUN echo "Software installed:"; \
